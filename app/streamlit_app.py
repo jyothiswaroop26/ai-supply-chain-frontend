@@ -1,4 +1,8 @@
 import streamlit as st
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__))
+from components.data_upload import render_data_upload
 
 # Configuration values
 USER_EMAIL = "pallajyothiswaroopkumar@gmail.com"
@@ -19,6 +23,7 @@ with st.sidebar:
         "Select section",
         [
             "Overview",
+            "Data Upload",
             "Inventory",
             "Demand Forecast",
             "Supplier Insights",
@@ -32,6 +37,9 @@ if section == "Overview":
     st.header("Overview")
     st.write("Placeholder content for the Overview section.")
     st.info("Add executive summary cards, KPIs, and dashboard highlights here.")
+
+elif section == "Data Upload":
+    render_data_upload()
 
 elif section == "Inventory":
     st.header("Inventory")
