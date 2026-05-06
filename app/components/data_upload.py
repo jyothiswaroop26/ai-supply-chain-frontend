@@ -11,6 +11,9 @@ def render_data_upload():
     if uploaded_file is not None:
         try:
             df = pd.read_csv(uploaded_file)
+            
+            # Store in session state for use in other components
+            st.session_state.uploaded_df = df
 
             st.success(f"File uploaded successfully: **{uploaded_file.name}**")
             st.markdown(f"**Rows:** {df.shape[0]}  |  **Columns:** {df.shape[1]}")

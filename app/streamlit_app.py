@@ -3,10 +3,15 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
 from components.data_upload import render_data_upload
+from components.data_view import render_data_view
 
 # Configuration values
 USER_EMAIL = "pallajyothiswaroopkumar@gmail.com"
 USER_NAME = "jyothiswaroop26"
+
+# Initialize session state
+if "uploaded_df" not in st.session_state:
+    st.session_state.uploaded_df = None
 
 st.set_page_config(
     page_title="AI Supply Chain Dashboard",
@@ -24,6 +29,7 @@ with st.sidebar:
         [
             "Overview",
             "Data Upload",
+            "Data Visualization",
             "Inventory",
             "Demand Forecast",
             "Supplier Insights",
@@ -40,6 +46,9 @@ if section == "Overview":
 
 elif section == "Data Upload":
     render_data_upload()
+
+elif section == "Data Visualization":
+    render_data_view()
 
 elif section == "Inventory":
     st.header("Inventory")
