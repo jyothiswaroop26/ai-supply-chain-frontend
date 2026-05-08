@@ -4,6 +4,7 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 from components.data_upload import render_data_upload
 from components.data_view import render_data_view
+from components.forecast_view import render_forecast_view
 
 # Configuration values
 USER_EMAIL = "pallajyothiswaroopkumar@gmail.com"
@@ -56,9 +57,7 @@ elif section == "Inventory":
     st.info("Add inventory levels, reorder alerts, and stock movement charts here.")
 
 elif section == "Demand Forecast":
-    st.header("Demand Forecast")
-    st.write("Placeholder content for the Demand Forecast section.")
-    st.info("Add forecast charts, trend analysis, and scenario planning tools here.")
+    render_forecast_view()
 
 elif section == "Supplier Insights":
     st.header("Supplier Insights")
