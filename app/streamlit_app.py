@@ -5,6 +5,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from components.data_upload import render_data_upload
 from components.data_view import render_data_view
 from components.forecast_view import render_forecast_view
+from components.kpi import render_kpi
 
 # Configuration values
 USER_EMAIL = "pallajyothiswaroopkumar@gmail.com"
@@ -31,6 +32,7 @@ with st.sidebar:
             "Overview",
             "Data Upload",
             "Data Visualization",
+            "KPIs",
             "Inventory",
             "Demand Forecast",
             "Supplier Insights",
@@ -50,6 +52,9 @@ elif section == "Data Upload":
 
 elif section == "Data Visualization":
     render_data_view()
+
+elif section == "KPIs":
+    render_kpi()
 
 elif section == "Inventory":
     st.header("Inventory")
