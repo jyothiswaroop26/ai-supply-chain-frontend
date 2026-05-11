@@ -21,6 +21,21 @@ st.set_page_config(
     layout="wide",
 )
 
+# Load and inject custom CSS
+def load_custom_css():
+    """Load and inject custom CSS styling."""
+    css_path = os.path.join(os.path.dirname(__file__), "styles", "custom.css")
+    if os.path.exists(css_path):
+        with open(css_path, "r") as css_file:
+            css_content = css_file.read()
+            st.markdown(
+                f"<style>{css_content}</style>",
+                unsafe_allow_html=True
+            )
+
+# Inject custom CSS at the beginning
+load_custom_css()
+
 st.title("AI Supply Chain Dashboard")
 st.markdown("Welcome to the AI Supply Chain frontend dashboard. Use the sidebar to navigate between sections and explore data-driven supply chain insights.")
 

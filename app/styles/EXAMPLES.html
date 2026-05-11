@@ -1,0 +1,290 @@
+<!-- 
+    Custom HTML Components using AI Supply Chain Dashboard CSS
+    These examples demonstrate how to use the custom CSS system
+-->
+
+<!-- Example 1: KPI Card with Styling -->
+<div class="kpi-card">
+  <div class="kpi-card-label">Total Orders</div>
+  <div class="kpi-card-value">2,548</div>
+  <div class="kpi-card-delta">📈 +12.5% from last month</div>
+</div>
+
+<!-- Example 2: Status Badges -->
+<div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+  <span class="text-success text-bold">✓ Active</span>
+  <span class="text-warning text-bold">⚠ Pending</span>
+  <span class="text-danger text-bold">✗ Critical</span>
+  <span class="text-info text-bold">ℹ Information</span>
+</div>
+
+<!-- Example 3: Styled Card Container -->
+<div style="
+  background: var(--light-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--spacing-lg);
+">
+  <h3 style="margin-top: 0; color: var(--text-primary);">Supply Chain Metrics</h3>
+  <p style="color: var(--text-secondary);">Monitor key performance indicators across your supply chain</p>
+</div>
+
+<!-- Example 4: Button Group -->
+<div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+  <button style="
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+  ">Primary Action</button>
+  
+  <button style="
+    background: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--radius-md);
+    padding: calc(var(--spacing-sm) - 2px) calc(var(--spacing-md) - 2px);
+    font-weight: 600;
+    cursor: pointer;
+  ">Secondary Action</button>
+</div>
+
+<!-- Example 5: Alert Box -->
+<div style="
+  background-color: rgba(52, 152, 219, 0.1);
+  border-left: 4px solid var(--info-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+">
+  <strong style="color: var(--info-color);">ℹ Information:</strong>
+  <p style="margin: var(--spacing-sm) 0 0 0; color: var(--text-secondary);">
+    This is an informational alert with styled content
+  </p>
+</div>
+
+<!-- Example 6: Grid Layout -->
+<div style="
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+">
+  <div class="kpi-card">
+    <div class="kpi-card-label">Processing Time</div>
+    <div class="kpi-card-value">2.4h</div>
+    <div class="kpi-card-delta">Average per order</div>
+  </div>
+  
+  <div class="kpi-card">
+    <div class="kpi-card-label">Fulfillment Rate</div>
+    <div class="kpi-card-value">98.5%</div>
+    <div class="kpi-card-delta">On-time delivery</div>
+  </div>
+  
+  <div class="kpi-card">
+    <div class="kpi-card-label">Cost Efficiency</div>
+    <div class="kpi-card-value">$12.50</div>
+    <div class="kpi-card-delta">Per unit shipped</div>
+  </div>
+</div>
+
+<!-- Example 7: Progress Indicator -->
+<div style="margin-bottom: var(--spacing-lg);">
+  <div style="
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+  ">
+    <span style="color: var(--text-primary); font-weight: 600;">Inventory Status</span>
+    <span style="color: var(--text-secondary); font-size: 0.9rem;">75%</span>
+  </div>
+  <div style="
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    height: 8px;
+  ">
+    <div style="
+      background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+      height: 100%;
+      width: 75%;
+      transition: width 0.3s ease;
+    "></div>
+  </div>
+</div>
+
+<!-- Example 8: Table with Styling -->
+<table style="
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--spacing-lg);
+">
+  <thead style="
+    background-color: rgba(31, 119, 224, 0.08);
+    border-bottom: 2px solid var(--primary-light);
+  ">
+    <tr>
+      <th style="
+        padding: var(--spacing-md);
+        text-align: left;
+        color: var(--text-primary);
+        font-weight: 600;
+      ">Order ID</th>
+      <th style="
+        padding: var(--spacing-md);
+        text-align: left;
+        color: var(--text-primary);
+        font-weight: 600;
+      ">Status</th>
+      <th style="
+        padding: var(--spacing-md);
+        text-align: left;
+        color: var(--text-primary);
+        font-weight: 600;
+      ">Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border-color);">
+      <td style="padding: var(--spacing-md); color: var(--text-primary);">ORD-001</td>
+      <td style="padding: var(--spacing-md);"><span class="text-success">✓ Delivered</span></td>
+      <td style="padding: var(--spacing-md); color: var(--text-primary); font-weight: 600;">$1,250.00</td>
+    </tr>
+    <tr style="background-color: rgba(31, 119, 224, 0.03); border-bottom: 1px solid var(--border-color);">
+      <td style="padding: var(--spacing-md); color: var(--text-primary);">ORD-002</td>
+      <td style="padding: var(--spacing-md);"><span class="text-warning">⚠ In Transit</span></td>
+      <td style="padding: var(--spacing-md); color: var(--text-primary); font-weight: 600;">$985.50</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border-color);">
+      <td style="padding: var(--spacing-md); color: var(--text-primary);">ORD-003</td>
+      <td style="padding: var(--spacing-md);"><span class="text-info">ℹ Processing</span></td>
+      <td style="padding: var(--spacing-md); color: var(--text-primary); font-weight: 600;">$2,150.75</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Example 9: Animated Card Hover Effect -->
+<div class="fade-in" style="
+  background: var(--light-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  margin-bottom: var(--spacing-lg);
+"
+onmouseover="this.style.boxShadow='var(--shadow-lg)'; this.style.transform='translateY(-4px)';"
+onmouseout="this.style.boxShadow='var(--shadow-sm)'; this.style.transform='translateY(0)'"
+>
+  <h4 style="margin-top: 0; color: var(--primary-color);">Hover Me!</h4>
+  <p style="color: var(--text-secondary); margin-bottom: 0;">
+    This card has smooth hover effects and animations
+  </p>
+</div>
+
+<!-- Example 10: Responsive Column Layout -->
+<div style="
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+">
+  <div style="
+    background: var(--light-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+  ">
+    <h4 style="margin-top: 0; color: var(--primary-color);">Feature 1</h4>
+    <p style="color: var(--text-secondary);">Description of the first feature</p>
+  </div>
+  
+  <div style="
+    background: var(--light-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+  ">
+    <h4 style="margin-top: 0; color: var(--primary-color);">Feature 2</h4>
+    <p style="color: var(--text-secondary);">Description of the second feature</p>
+  </div>
+  
+  <div style="
+    background: var(--light-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+  ">
+    <h4 style="margin-top: 0; color: var(--primary-color);">Feature 3</h4>
+    <p style="color: var(--text-secondary);">Description of the third feature</p>
+  </div>
+</div>
+
+<!-- HOW TO USE IN STREAMLIT -->
+<!--
+
+import streamlit as st
+
+# Simple example - Display a styled card
+st.markdown("""
+<div class="kpi-card">
+  <div class="kpi-card-label">Total Revenue</div>
+  <div class="kpi-card-value">$125,480</div>
+  <div class="kpi-card-delta">📈 +8.5% from last quarter</div>
+</div>
+""", unsafe_allow_html=True)
+
+# With column layout
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.markdown("""
+    <div class="kpi-card">
+      <div class="kpi-card-label">Orders</div>
+      <div class="kpi-card-value">1,234</div>
+      <div class="kpi-card-delta">This month</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Styled alerts
+st.markdown("""
+<div style="
+  background-color: rgba(46, 204, 113, 0.1);
+  border-left: 4px solid #2ecc71;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+">
+  <strong style="color: #2ecc71;">✓ Success!</strong>
+  <p style="margin: var(--spacing-sm) 0 0 0; color: var(--text-secondary);">
+    Your operation completed successfully
+  </p>
+</div>
+""", unsafe_allow_html=True)
+
+# Custom button with styling
+st.markdown("""
+<button style="
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+" onclick="alert('Button clicked!')">
+  Click Me
+</button>
+""", unsafe_allow_html=True)
+
+-->
