@@ -6,6 +6,7 @@ from components.data_upload import render_data_upload
 from components.data_view import render_data_view
 from components.forecast_view import render_forecast_view
 from components.kpi import render_kpi
+from components.filters import render_filters
 
 # Configuration values
 USER_EMAIL = "pallajyothiswaroopkumar@gmail.com"
@@ -46,6 +47,7 @@ with st.sidebar:
         [
             "Overview",
             "Data Upload",
+            "Filters & Search",
             "Data Visualization",
             "KPIs",
             "Inventory",
@@ -64,6 +66,9 @@ if section == "Overview":
 
 elif section == "Data Upload":
     render_data_upload()
+
+elif section == "Filters & Search":
+    render_filters()
 
 elif section == "Data Visualization":
     render_data_view()
