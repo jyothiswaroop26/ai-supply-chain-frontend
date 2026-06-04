@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 def render_filters():
     """Render filter controls for supply chain data filtering and analysis."""
-    st.header("Filters & Search")
+    st.markdown('<div class="section-header"><span class="section-header-accent"></span>Filters &amp; Search</div>', unsafe_allow_html=True)
     st.write("Use the controls below to filter and refine your supply chain data.")
 
     # Check if data is available in session state

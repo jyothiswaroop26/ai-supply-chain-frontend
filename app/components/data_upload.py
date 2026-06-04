@@ -3,7 +3,7 @@ import pandas as pd
 
 
 def render_data_upload():
-    st.header("Data Upload")
+    st.markdown('<div class="section-header"><span class="section-header-accent"></span>Data Upload</div>', unsafe_allow_html=True)
     st.write("Upload a CSV file to preview and work with your supply chain data.")
 
     uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
@@ -16,7 +16,17 @@ def render_data_upload():
             st.session_state.uploaded_df = df
 
             st.success(f"File uploaded successfully: **{uploaded_file.name}**")
-            st.markdown(f"**Rows:** {df.shape[0]}  |  **Columns:** {df.shape[1]}")
+
+            # Stats bar
+            mem_kb = round(df.memory_usage(deep=True).sum() / 1024, 1)
+            st.markdown(f"""
+<div class="upload-stats-bar">
+  <div class="upload-stat"><span class="upload-stat-icon">🗂️</span><strong>{df.shape[0]:,}</strong> rows</div>
+  <div class="upload-stat"><span class="upload-stat-icon">📋</span><strong>{df.shape[1]}</strong> columns</div>
+  <div class="upload-stat"><span class="upload-stat-icon">🔢</span><strong>{len(df.select_dtypes(include=['number']).columns)}</strong> numeric</div>
+  <div class="upload-stat"><span class="upload-stat-icon">💾</span><strong>{mem_kb} KB</strong> in memory</div>
+</div>
+""", unsafe_allow_html=True)
 
             st.subheader("Data Preview")
 

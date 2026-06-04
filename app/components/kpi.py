@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 def render_kpi():
     """Render Key Performance Indicators (KPI) cards for supply chain metrics."""
-    st.header("Key Performance Indicators (KPIs)")
+    st.markdown('<div class="section-header"><span class="section-header-accent"></span>Key Performance Indicators</div>', unsafe_allow_html=True)
     st.write("Monitor critical supply chain metrics and performance indicators.")
 
     # Check if data is available in session state
