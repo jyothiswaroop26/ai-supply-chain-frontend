@@ -1,6 +1,15 @@
 """
 Mock API Client for AI Supply Chain Frontend
 Provides mock implementations of API endpoints for development and testing.
+
+UI Integration Features:
+- Direct upload and analysis of CSV data
+- Real-time KPI calculations
+- Demand forecasting with multiple methods
+- Supplier performance analytics
+- Inventory management
+- Chat-based AI assistance
+- Report generation
 """
 
 import time
@@ -8,9 +17,14 @@ import random
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Union
 from dataclasses import dataclass, asdict
 import json
+import logging
+
+# Setup logging for debugging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -26,6 +40,10 @@ class APIResponse:
         """Convert response to dictionary."""
         self.timestamp = datetime.now().isoformat()
         return asdict(self)
+    
+    def __bool__(self):
+        """Allow APIResponse to be used in boolean context."""
+        return self.success
 
 
 class MockAPIClient:
@@ -688,6 +706,300 @@ class MockAPIClient:
             message="API is operational"
         )
 
+    # =========================================================================
+    # UI Integration Methods
+    # =========================================================================
+
+    def validate_upload_data(self, data: pd.DataFrame) -> APIResponse:
+        """
+        Validate uploaded data for quality and compatibility.
+        
+        Args:
+            data: DataFrame to validate
+            
+        Returns:
+            APIResponse with validation results
+        """
+        self._simulate_network_delay()
+        
+        try:
+            validation_results = {
+                "is_valid": True,
+                "total_rows": len(data),
+                "total_columns": len(data.columns),
+                "column_names": data.columns.tolist(),
+                "data_types": data.dtypes.astype(str).to_dict(),
+                "numeric_columns": data.select_dtypes(include=[np.number]).columns.tolist(),
+                "categorical_columns": data.select_dtypes(include=["object"]).columns.tolist(),
+                "missing_values": data.isnull().sum().to_dict(),
+                "missing_percentage": (data.isnull().sum() / len(data) * 100).to_dict(),
+                "duplicate_rows": len(data) - len(data.drop_duplicates()),
+                "memory_usage_mb": round(data.memory_usage(deep=True).sum() / (1024 * 1024), 2),
+                "warnings": self._generate_validation_warnings(data),
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            return APIResponse(
+                success=True,
+                data=validation_results,
+                message="Data validation completed successfully"
+            )
+        except Exception as e:
+            return APIResponse(
+                success=False,
+                error=str(e),
+                message="Data validation failed"
+            )
+
+    def _generate_validation_warnings(self, data: pd.DataFrame) -> List[str]:
+        """Generate data quality warnings."""
+        warnings = []
+        
+        # Check for excessive missing values
+        missing_pct = (data.isnull().sum() / len(data) * 100).max()
+        if missing_pct > 20:
+            warnings.append(f"High missing values detected: {missing_pct:.1f}%")
+        
+        # Check for duplicate rows
+        dup_count = len(data) - len(data.drop_duplicates())
+        if dup_count > 0:
+            warnings.append(f"Found {dup_count} duplicate rows")
+        
+        # Check for potential outliers in numeric columns
+        numeric_data = data.select_dtypes(include=[np.number])
+        for col in numeric_data.columns:
+            Q1 = numeric_data[col].quantile(0.25)
+            Q3 = numeric_data[col].quantile(0.75)
+            IQR = Q3 - Q1
+            outliers = ((numeric_data[col] < (Q1 - 1.5 * IQR)) | 
+                       (numeric_data[col] > (Q3 + 1.5 * IQR))).sum()
+            if outliers > 0:
+                warnings.append(f"Column '{col}': {outliers} potential outliers detected")
+        
+        return warnings
+
+    def get_data_insights(self, data: pd.DataFrame) -> APIResponse:
+        """
+        Generate automatic insights from uploaded data.
+        
+        Args:
+            data: DataFrame to analyze
+            
+        Returns:
+            APIResponse with insights
+        """
+        self._simulate_network_delay()
+        
+        try:
+            numeric_data = data.select_dtypes(include=[np.number])
+            
+            insights = {
+                "summary_stats": {
+                    "rows": len(data),
+                    "columns": len(data.columns),
+                    "memory_mb": round(data.memory_usage(deep=True).sum() / (1024 * 1024), 2)
+                },
+                "numeric_summary": {
+                    "count": len(numeric_data.columns),
+                    "mean": numeric_data.mean().to_dict(),
+                    "median": numeric_data.median().to_dict(),
+                    "std": numeric_data.std().to_dict(),
+                    "min": numeric_data.min().to_dict(),
+                    "max": numeric_data.max().to_dict()
+                },
+                "categorical_summary": {
+                    col: data[col].nunique() 
+                    for col in data.select_dtypes(include=["object"]).columns
+                },
+                "data_quality": {
+                    "completeness": round((1 - data.isnull().sum().sum() / (len(data) * len(data.columns))) * 100, 1),
+                    "duplicates": len(data) - len(data.drop_duplicates()),
+                    "unique_ratio": round(len(data.drop_duplicates()) / len(data) * 100, 1)
+                },
+                "key_findings": self._extract_key_findings(data),
+                "generated_at": datetime.now().isoformat()
+            }
+            
+            return APIResponse(
+                success=True,
+                data=insights,
+                message="Insights generated successfully"
+            )
+        except Exception as e:
+            return APIResponse(
+                success=False,
+                error=str(e),
+                message="Insight generation failed"
+            )
+
+    def _extract_key_findings(self, data: pd.DataFrame) -> List[str]:
+        """Extract key findings from data."""
+        findings = []
+        numeric_data = data.select_dtypes(include=[np.number])
+        
+        if not numeric_data.empty:
+            # Find columns with high variance
+            cv = (numeric_data.std() / numeric_data.mean()).abs()
+            high_var_cols = cv[cv > 1].index.tolist()
+            if high_var_cols:
+                findings.append(f"High variability in: {', '.join(high_var_cols[:2])}")
+            
+            # Identify correlations
+            corr_matrix = numeric_data.corr()
+            strong_corrs = []
+            for i in range(len(corr_matrix.columns)):
+                for j in range(i+1, len(corr_matrix.columns)):
+                    if abs(corr_matrix.iloc[i, j]) > 0.7:
+                        strong_corrs.append(
+                            f"{corr_matrix.columns[i]} ↔ {corr_matrix.columns[j]}: {corr_matrix.iloc[i, j]:.2f}"
+                        )
+            if strong_corrs:
+                findings.extend(strong_corrs[:2])
+        
+        if len(findings) == 0:
+            findings.append("Data appears consistent with normal patterns")
+        
+        return findings
+
+    def process_data_for_analysis(self, data: pd.DataFrame, operations: Optional[Dict] = None) -> APIResponse:
+        """
+        Process data with specified transformations for analysis.
+        
+        Args:
+            data: DataFrame to process
+            operations: Dict of operations to apply {'drop_duplicates': True, 'fill_missing': 'mean', etc}
+            
+        Returns:
+            APIResponse with processed data info
+        """
+        self._simulate_network_delay()
+        
+        try:
+            processed_data = data.copy()
+            operations = operations or {}
+            applied_operations = []
+            
+            # Drop duplicates
+            if operations.get('drop_duplicates', False):
+                before = len(processed_data)
+                processed_data = processed_data.drop_duplicates()
+                removed = before - len(processed_data)
+                applied_operations.append(f"Removed {removed} duplicate rows")
+            
+            # Fill missing values
+            fill_strategy = operations.get('fill_missing')
+            if fill_strategy:
+                for col in processed_data.select_dtypes(include=[np.number]).columns:
+                    if processed_data[col].isnull().any():
+                        if fill_strategy == 'mean':
+                            processed_data[col].fillna(processed_data[col].mean(), inplace=True)
+                        elif fill_strategy == 'median':
+                            processed_data[col].fillna(processed_data[col].median(), inplace=True)
+                        elif fill_strategy == 'forward':
+                            processed_data[col].fillna(method='ffill', inplace=True)
+                applied_operations.append(f"Filled missing values using {fill_strategy}")
+            
+            # Normalize numeric columns
+            if operations.get('normalize', False):
+                numeric_cols = processed_data.select_dtypes(include=[np.number]).columns
+                for col in numeric_cols:
+                    min_val = processed_data[col].min()
+                    max_val = processed_data[col].max()
+                    if max_val != min_val:
+                        processed_data[col] = (processed_data[col] - min_val) / (max_val - min_val)
+                applied_operations.append("Normalized numeric columns")
+            
+            result = {
+                "original_rows": len(data),
+                "processed_rows": len(processed_data),
+                "original_columns": len(data.columns),
+                "processed_columns": len(processed_data.columns),
+                "applied_operations": applied_operations,
+                "data_summary": {
+                    "rows": len(processed_data),
+                    "columns": len(processed_data.columns),
+                    "memory_mb": round(processed_data.memory_usage(deep=True).sum() / (1024 * 1024), 2)
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            return APIResponse(
+                success=True,
+                data=result,
+                message="Data processed successfully"
+            )
+        except Exception as e:
+            return APIResponse(
+                success=False,
+                error=str(e),
+                message="Data processing failed"
+            )
+
+    def get_column_statistics(self, data: pd.DataFrame, column: str) -> APIResponse:
+        """
+        Get detailed statistics for a specific column.
+        
+        Args:
+            data: DataFrame containing the column
+            column: Column name
+            
+        Returns:
+            APIResponse with column statistics
+        """
+        self._simulate_network_delay()
+        
+        try:
+            if column not in data.columns:
+                return APIResponse(
+                    success=False,
+                    error=f"Column '{column}' not found",
+                    message="Column not found"
+                )
+            
+            col_data = data[column]
+            is_numeric = pd.api.types.is_numeric_dtype(col_data)
+            
+            stats = {
+                "column_name": column,
+                "dtype": str(col_data.dtype),
+                "non_null_count": col_data.notna().sum(),
+                "null_count": col_data.isnull().sum(),
+                "unique_values": col_data.nunique()
+            }
+            
+            if is_numeric:
+                stats.update({
+                    "mean": float(col_data.mean()),
+                    "median": float(col_data.median()),
+                    "mode": float(col_data.mode()[0]) if len(col_data.mode()) > 0 else None,
+                    "std": float(col_data.std()),
+                    "variance": float(col_data.var()),
+                    "min": float(col_data.min()),
+                    "25%": float(col_data.quantile(0.25)),
+                    "50%": float(col_data.quantile(0.50)),
+                    "75%": float(col_data.quantile(0.75)),
+                    "max": float(col_data.max()),
+                    "range": float(col_data.max() - col_data.min()),
+                    "iqr": float(col_data.quantile(0.75) - col_data.quantile(0.25))
+                })
+            else:
+                stats.update({
+                    "top_values": col_data.value_counts().head(5).to_dict(),
+                    "sample_values": col_data.unique()[:10].tolist()
+                })
+            
+            return APIResponse(
+                success=True,
+                data=stats,
+                message="Column statistics retrieved"
+            )
+        except Exception as e:
+            return APIResponse(
+                success=False,
+                error=str(e),
+                message="Failed to retrieve column statistics"
+            )
+
 
 # ============================================================================
 # Singleton instance for easy module-level access
@@ -709,6 +1021,7 @@ def get_api_client(simulate_delay: bool = True) -> MockAPIClient:
     global _client
     if _client is None:
         _client = MockAPIClient(simulate_delay=simulate_delay)
+        logger.info("MockAPIClient initialized")
     return _client
 
 
@@ -716,3 +1029,149 @@ def reset_api_client():
     """Reset the API client singleton."""
     global _client
     _client = None
+    logger.info("MockAPIClient reset")
+
+
+# ============================================================================
+# Convenience functions for UI components
+# ============================================================================
+
+def upload_and_analyze_csv(filename: str, data: pd.DataFrame) -> Tuple[APIResponse, APIResponse, APIResponse]:
+    """
+    Complete workflow for uploading and analyzing CSV data.
+    
+    Args:
+        filename: Name of the file
+        data: DataFrame with the data
+        
+    Returns:
+        Tuple of (upload_response, validation_response, insights_response)
+    """
+    client = get_api_client()
+    
+    logger.info(f"Starting upload and analysis workflow for {filename}")
+    
+    # Step 1: Upload
+    upload_resp = client.upload_data(filename, data)
+    if not upload_resp.success:
+        return upload_resp, None, None
+    
+    # Step 2: Validate
+    validation_resp = client.validate_upload_data(data)
+    if not validation_resp.success:
+        return upload_resp, validation_resp, None
+    
+    # Step 3: Get insights
+    insights_resp = client.get_data_insights(data)
+    
+    logger.info(f"Upload and analysis workflow completed for {filename}")
+    
+    return upload_resp, validation_resp, insights_resp
+
+
+def generate_complete_forecast(data: pd.DataFrame, periods: int = 7) -> APIResponse:
+    """
+    Generate forecast with data validation.
+    
+    Args:
+        data: DataFrame with historical data
+        periods: Number of periods to forecast
+        
+    Returns:
+        APIResponse with forecast data
+    """
+    client = get_api_client()
+    
+    logger.info(f"Generating forecast for {periods} periods")
+    
+    # Get numeric columns
+    numeric_cols = data.select_dtypes(include=[np.number]).columns.tolist()
+    if not numeric_cols:
+        return APIResponse(
+            success=False,
+            error="No numeric columns found",
+            message="Forecast requires numeric data"
+        )
+    
+    # Use first numeric column
+    data_points = data[numeric_cols[0]].dropna().values.tolist()
+    
+    # Generate forecast
+    forecast_resp = client.generate_forecast(
+        data_points=data_points,
+        periods=periods,
+        method="linear"
+    )
+    
+    logger.info(f"Forecast generated successfully")
+    
+    return forecast_resp
+
+
+def analyze_data_quality(data: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Quick analysis of data quality.
+    
+    Args:
+        data: DataFrame to analyze
+        
+    Returns:
+        Dictionary with quality metrics
+    """
+    client = get_api_client()
+    
+    validation = client.validate_upload_data(data)
+    if validation.success:
+        return validation.data
+    return {}
+
+
+def get_kpi_summary(data: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Get quick KPI summary from data.
+    
+    Args:
+        data: DataFrame with data
+        
+    Returns:
+        Dictionary with KPI values
+    """
+    client = get_api_client()
+    
+    kpi_resp = client.calculate_kpis(data)
+    if kpi_resp.success:
+        return kpi_resp.data
+    return {}
+
+
+# ============================================================================
+# Configuration and factory functions
+# ============================================================================
+
+def create_api_client(mock_mode: bool = True, simulate_delay: bool = True) -> MockAPIClient:
+    """
+    Create a new API client instance.
+    
+    Args:
+        mock_mode: Whether to use mock mode (always True for MockAPIClient)
+        simulate_delay: Whether to simulate network delays
+        
+    Returns:
+        MockAPIClient instance
+    """
+    logger.info(f"Creating new MockAPIClient (simulate_delay={simulate_delay})")
+    return MockAPIClient(simulate_delay=simulate_delay)
+
+
+def get_available_endpoints() -> List[str]:
+    """
+    Get list of available API endpoints.
+    
+    Returns:
+        List of endpoint names
+    """
+    client = get_api_client()
+    health = client.health_check()
+    if health.success:
+        return health.data.get("endpoints", [])
+    return []

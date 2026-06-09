@@ -5,7 +5,7 @@ import plotly.express as px
 
 def render_data_view():
     """Render data visualization component with line and bar charts."""
-    st.header("Data Visualization")
+    st.markdown('<div class="section-header"><span class="section-header-accent"></span>Data Visualization</div>', unsafe_allow_html=True)
     st.write("Create interactive charts from your supply chain data.")
 
     # Check if data is available in session state

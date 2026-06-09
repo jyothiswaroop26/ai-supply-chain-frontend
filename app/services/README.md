@@ -1,9 +1,38 @@
-```markdown
-# Mock API Client Documentation
+# Services Module - Complete API Integration
 
-## Overview
+**⭐ Complete, production-ready API integration system for the AI Supply Chain Frontend.**
 
-The Mock API Client provides a comprehensive set of mock API endpoints for the AI Supply Chain Frontend application. It's designed for development, testing, and prototyping without requiring a real backend server.
+This module provides unified API integration supporting both mock (development) and HTTP (production) backends with intelligent caching, error handling, and Streamlit integration.
+
+## Quick Start (30 seconds)
+
+### 1. Import Service
+```python
+from app.services import get_streamlit_api_service
+```
+
+### 2. Use in Your Component
+```python
+service = get_streamlit_api_service()
+suppliers = service.fetch_suppliers()
+
+if suppliers:
+    st.dataframe(pd.DataFrame(suppliers))
+```
+
+### 3. Configure (`.env`)
+```env
+API_ENV=mock
+API_MOCK_MODE=true
+```
+
+**Done!** Your component now has full API integration with caching and error handling.
+
+---
+
+## Module Overview
+
+**The Mock API Client** provides a comprehensive set of mock API endpoints for the AI Supply Chain Frontend application. It's designed for development, testing, and prototyping without requiring a real backend server.
 
 ## Features
 

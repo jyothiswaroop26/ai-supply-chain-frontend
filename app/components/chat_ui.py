@@ -152,38 +152,44 @@ def add_message(role: str, content: str, metadata: Optional[dict] = None):
 
 
 def render_chat_message(message: dict):
-    """Render a single chat message with appropriate styling."""
+    """Render a single chat message as a styled chat bubble."""
     role = message.get("role", "assistant")
     content = message.get("content", "")
     timestamp = message.get("timestamp", "")
-    
-    # Define message styles based on role
+
     if role == "user":
-        message_class = "chat-message-user"
-        icon = "👤"
-        title = "You"
+        bubble_class = "chat-bubble-user"
+        row_class = "chat-row-user"
+        avatar = "👤"
+        label = "You"
     elif role == "assistant":
-        message_class = "chat-message-assistant"
-        icon = "🤖"
-        title = "AI Assistant"
-    else:  # system
-        message_class = "chat-message-system"
-        icon = "⚙️"
-        title = "System"
-    
-    # Render message container
-    with st.container():
-        # Message header with role and timestamp
-        col1, col2 = st.columns([0.9, 0.1])
-        with col1:
-            st.markdown(f"<div class='{message_class}'>", unsafe_allow_html=True)
-            st.markdown(f"**{icon} {title}**")
-        with col2:
-            st.caption(timestamp)
-        
-        # Message content
-        st.markdown(content)
-        st.markdown("</div>", unsafe_allow_html=True)
+        bubble_class = "chat-bubble-assistant"
+        row_class = "chat-row-assistant"
+        avatar = "🤖"
+        label = "AI Assistant"
+    else:
+        bubble_class = "chat-bubble-system"
+        row_class = "chat-row-system"
+        avatar = "⚙️"
+        label = "System"
+
+    # Escape HTML special chars in content, then re-allow newlines as <br>
+    import html as _html
+    safe_content = _html.escape(content).replace("\n", "<br>")
+
+    bubble_html = f"""
+<div class="chat-row {row_class}">
+  <div class="chat-avatar">{avatar}</div>
+  <div class="chat-bubble-wrap">
+    <div class="chat-bubble-meta">
+      <span class="chat-bubble-label">{label}</span>
+      <span class="chat-bubble-time">{timestamp}</span>
+    </div>
+    <div class="chat-bubble {bubble_class}">{safe_content}</div>
+  </div>
+</div>
+"""
+    st.markdown(bubble_html, unsafe_allow_html=True)
 
 
 def render_chat_history():
@@ -308,7 +314,7 @@ def render_chat_ui():
     # Initialize session
     initialize_chat_session()
 
-    st.header("💬 AI Chat Assistant")
+    st.markdown('<div class="section-header"><span class="section-header-accent"></span>AI Chat Assistant</div>', unsafe_allow_html=True)
     st.write("Interact with the AI assistant to get supply chain insights and recommendations.")
 
     # Session name badge

@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 def render_forecast_view():
     """Render demand forecast predictions component."""
-    st.header("Demand Forecast")
+    st.markdown('<div class="section-header"><span class="section-header-accent"></span>Demand Forecast</div>', unsafe_allow_html=True)
     st.write("View AI-powered demand forecasts and trend predictions for your supply chain data.")
 
     # Check if data is available in session state
