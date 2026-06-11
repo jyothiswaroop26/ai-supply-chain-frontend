@@ -7,6 +7,7 @@ from components.data_view import render_data_view
 from components.forecast_view import render_forecast_view
 from components.kpi import render_kpi
 from components.filters import render_filters
+from components.chat_ui import render_chat_ui
 
 # Configuration values
 USER_EMAIL = "pallajyothiswaroopkumar@gmail.com"
@@ -62,11 +63,13 @@ with st.sidebar:
             "Inventory",
             "Demand Forecast",
             "Supplier Insights",
+            "AI Chatbot",
             "Settings",
         ],
     )
     st.markdown("---")
     st.markdown("Use this sidebar to switch views and control high-level app options.")
+    st.caption("Release: UI Polish Final")
 
 if section == "Overview":
     with st.spinner("Loading Overview..."):
@@ -137,6 +140,10 @@ elif section == "Supplier Insights":
     with st.spinner("Loading Supplier Insights..."):
         st.markdown('<div class="section-header"><span class="section-header-accent"></span>Supplier Insights</div>', unsafe_allow_html=True)
         st.info("Add supplier performance, lead time analysis, and risk scoring here.")
+
+elif section == "AI Chatbot":
+    with st.spinner("Loading AI Chatbot..."):
+        render_chat_ui()
 
 elif section == "Settings":
     with st.spinner("Loading Settings..."):

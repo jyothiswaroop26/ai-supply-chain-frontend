@@ -4,6 +4,7 @@ import json
 import os
 from datetime import datetime
 from typing import Optional, List, Dict
+from services.streamlit_service import get_streamlit_api_service
 
 # Directory to persist chat history files
 CHAT_HISTORY_DIR = os.path.join(os.path.dirname(__file__), "..", "chat_history")
@@ -357,10 +358,33 @@ def render_chat_ui():
         if send_button and user_input.strip():
             # Add user message
             add_message("user", user_input)
-            
-            # Simulate AI response
-            ai_response = generate_ai_response(user_input)
-            add_message("assistant", ai_response)
+
+            # Send message to backend chat service
+            service = get_streamlit_api_service()
+            with st.spinner("AI assistant is thinking..."):
+                response = service.send_chat_message(
+                    user_input,
+                    session_id=st.session_state.current_session_id,
+                )
+
+            if response is not None:
+                backend_session_id = response.get("session_id")
+                if backend_session_id:
+                    st.session_state.current_session_id = backend_session_id
+
+                ai_response = (
+                    response.get("response")
+                    or response.get("message")
+                    or response.get("reply")
+                    or response.get("answer")
+                    or "I could not parse a response from the backend."
+                )
+                add_message("assistant", ai_response)
+            else:
+                add_message(
+                    "system",
+                    "The assistant could not be reached. Please try again in a moment.",
+                )
             
             # Reset input
             st.session_state.chat_input_key += 1
