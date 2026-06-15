@@ -1175,3 +1175,105 @@ def get_available_endpoints() -> List[str]:
     if health.success:
         return health.data.get("endpoints", [])
     return []
+
+
+def send_query(query: str, session_id: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Send a chat query through the API client.
+
+    Args:
+        query: User's message
+        session_id: Optional session ID
+
+    Returns:
+        Response payload normalized for UI integration.
+    """
+    client = get_api_client()
+    response = client.send_chat_message(message=query, session_id=session_id)
+
+    if not response.success:
+        return {
+            "success": False,
+            "session_id": session_id,
+            "query": query,
+            "response": "",
+            "error": response.error or response.message or "Failed to get chat response",
+            "source": "api_client",
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    payload = response.data if isinstance(response.data, dict) else {}
+    return {
+        "success": True,
+        "session_id": payload.get("session_id", session_id),
+        "query": query,
+        "response": (
+            payload.get("response")
+            or payload.get("message")
+            or payload.get("reply")
+            or payload.get("answer")
+            or ""
+        ),
+        "raw": payload,
+        "source": "api_client",
+        "timestamp": payload.get("timestamp", datetime.now().isoformat()),
+    }
+
+
+def get_forecast(
+    data_points: Optional[List[float]] = None,
+    periods: int = 7,
+    metric: str = "demand",
+    method: str = "linear",
+) -> Dict[str, Any]:
+    """
+    Get forecast data through the API client.
+
+    Args:
+        data_points: Historical values for forecasting
+        periods: Number of forecast periods
+        metric: Metric name for forecast labeling
+        method: Forecast method (linear, moving_average, exponential)
+
+    Returns:
+        Forecast payload normalized for UI integration.
+    """
+    safe_periods = max(1, int(periods))
+    client = get_api_client()
+
+    if data_points is None:
+        data_points = [100.0, 108.0, 112.0, 119.0, 123.0, 130.0, 136.0]
+
+    safe_method = (method or "linear").lower()
+    if safe_method not in {"linear", "moving_average", "exponential"}:
+        safe_method = "linear"
+
+    response = client.generate_forecast(
+        data_points=data_points,
+        periods=safe_periods,
+        method=safe_method,
+    )
+
+    if not response.success:
+        return {
+            "success": False,
+            "metric": metric,
+            "periods": safe_periods,
+            "forecast_values": [],
+            "error": response.error or response.message or "Failed to generate forecast",
+            "source": "api_client",
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    payload = response.data if isinstance(response.data, dict) else {}
+    return {
+        "success": True,
+        "metric": metric,
+        "periods": payload.get("periods", safe_periods),
+        "forecast_values": payload.get("forecast_values", []),
+        "confidence_interval": payload.get("confidence_interval"),
+        "method": payload.get("method", safe_method),
+        "raw": payload,
+        "source": "api_client",
+        "timestamp": payload.get("generated_at", datetime.now().isoformat()),
+    }

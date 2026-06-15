@@ -1,9 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
+from services.api_client import get_forecast
 
 
 def render_forecast_view():
@@ -50,6 +49,11 @@ def render_forecast_view():
             help="Select the forecasting algorithm"
         )
 
+    run_forecast = st.button("Generate Forecast", type="primary")
+    if not run_forecast:
+        st.info("Select forecast settings and click Generate Forecast.")
+        return
+
     # Generate forecast
     historical_data = df[forecast_column].dropna()
     
@@ -57,11 +61,42 @@ def render_forecast_view():
         st.error("Not enough data points to generate forecast.")
         return
 
-    forecast_values = _generate_forecast(
-        historical_data.values, 
-        forecast_periods, 
-        forecast_method
-    )
+    method_map = {
+        "Linear Trend": "linear",
+        "Moving Average": "moving_average",
+        "Exponential Smoothing": "exponential",
+    }
+
+    try:
+        with st.spinner("Generating forecast from API..."):
+            response = get_forecast(
+                data_points=historical_data.values.tolist(),
+                periods=forecast_periods,
+                metric=forecast_column,
+                method=method_map.get(forecast_method, "linear"),
+            )
+    except Exception as exc:
+        st.error(f"Forecast API request failed: {exc}")
+        return
+
+    if not response.get("success"):
+        st.error(response.get("error") or "Failed to generate forecast from API.")
+        return
+
+    forecast_values = np.array(response.get("forecast_values", []), dtype=float)
+    if forecast_values.size == 0:
+        st.warning("API returned an empty forecast. Try a different metric or method.")
+        return
+
+    if forecast_values.size != forecast_periods:
+        st.warning(
+            f"Expected {forecast_periods} forecast points, but got {forecast_values.size}. Showing available data."
+        )
+        forecast_periods = int(forecast_values.size)
+
+    confidence = response.get("confidence_interval") or {}
+    upper_from_api = confidence.get("upper_bound")
+    lower_from_api = confidence.get("lower_bound")
 
     # Create visualization
     st.subheader("Forecast Visualization")
@@ -92,9 +127,13 @@ def render_forecast_view():
         marker=dict(size=6)
     ))
 
-    # Add confidence interval (simple visualization)
-    upper_bound = forecast_values * 1.1
-    lower_bound = forecast_values * 0.9
+    # Add confidence interval from API when available.
+    if upper_from_api and lower_from_api and len(upper_from_api) == forecast_periods and len(lower_from_api) == forecast_periods:
+        upper_bound = np.array(upper_from_api, dtype=float)
+        lower_bound = np.array(lower_from_api, dtype=float)
+    else:
+        upper_bound = forecast_values * 1.1
+        lower_bound = forecast_values * 0.9
 
     fig.add_trace(go.Scatter(
         x=forecast_index.tolist() + forecast_index.tolist()[::-1],
@@ -117,16 +156,32 @@ def render_forecast_view():
 
     st.plotly_chart(fig, use_container_width=True)
 
+    raw = response.get("raw") or {}
+    mape = raw.get("mape")
+    rmse = raw.get("rmse")
+    model_used = response.get("method", "-")
+    st.caption(
+        f"API model: {model_used}"
+        + (f" | MAPE: {mape}" if mape is not None else "")
+        + (f" | RMSE: {rmse}" if rmse is not None else "")
+    )
+
     # Display forecast statistics
     st.subheader("Forecast Statistics")
     
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
+        baseline_value = historical_data.iloc[-1]
+        if baseline_value == 0:
+            delta_value = "N/A"
+        else:
+            delta_value = f"{forecast_values[0] - baseline_value:.2f}"
+
         st.metric(
             "Last Historical Value",
-            f"{historical_data.iloc[-1]:.2f}",
-            delta=f"{forecast_values[0] - historical_data.iloc[-1]:.2f}",
+            f"{baseline_value:.2f}",
+            delta=delta_value,
             delta_color="inverse"
         )
 
@@ -154,10 +209,12 @@ def render_forecast_view():
     forecast_df = pd.DataFrame({
         "Period": range(1, forecast_periods + 1),
         "Forecast Value": forecast_values,
-        "Upper Bound (±10%)": forecast_values * 1.1,
-        "Lower Bound (±10%)": forecast_values * 0.9,
-        "Change %": [(forecast_values[i] - historical_data.iloc[-1]) / historical_data.iloc[-1] * 100 
-                     for i in range(len(forecast_values))]
+        "Upper Bound": upper_bound,
+        "Lower Bound": lower_bound,
+        "Change %": [
+            0.0 if historical_data.iloc[-1] == 0 else (forecast_values[i] - historical_data.iloc[-1]) / historical_data.iloc[-1] * 100
+            for i in range(len(forecast_values))
+        ]
     })
 
     st.dataframe(forecast_df.round(2), use_container_width=True)
@@ -179,6 +236,10 @@ def render_forecast_view():
 
     with col2:
         # Growth rate
+        if historical_data.iloc[-1] == 0:
+            st.info("📊 Growth rate unavailable because the latest historical value is 0.", icon="ℹ️")
+            return
+
         growth_rate = ((forecast_values[-1] - historical_data.iloc[-1]) / historical_data.iloc[-1]) * 100
         
         if growth_rate > 0:
@@ -189,46 +250,3 @@ def render_forecast_view():
             st.info(f"📊 Predicted Stability: {growth_rate:.2f}%", icon="ℹ️")
 
 
-def _generate_forecast(data, periods, method):
-    """Generate forecast using specified method."""
-    
-    if method == "Linear Trend":
-        # Linear regression trend
-        x = np.arange(len(data))
-        coeffs = np.polyfit(x, data, 1)
-        poly = np.poly1d(coeffs)
-        future_x = np.arange(len(data), len(data) + periods)
-        forecast = poly(future_x)
-        
-    elif method == "Moving Average":
-        # Exponential weighted moving average projection
-        if len(data) >= 3:
-            ma_window = min(3, len(data))
-            ma = np.convolve(data, np.ones(ma_window)/ma_window, mode='valid')
-            last_value = data[-1]
-            trend = (ma[-1] - ma[0]) / (len(ma) - 1) if len(ma) > 1 else 0
-            forecast = np.array([last_value + trend * (i + 1) for i in range(periods)])
-        else:
-            forecast = np.full(periods, data.mean())
-            
-    elif method == "Exponential Smoothing":
-        # Simple exponential smoothing
-        alpha = 0.3
-        level = data[0]
-        forecast = []
-        
-        # Fit on historical data
-        for value in data[1:]:
-            level = alpha * value + (1 - alpha) * level
-        
-        # Generate forecast
-        for _ in range(periods):
-            forecast.append(level)
-            level = alpha * level + (1 - alpha) * level
-            
-        forecast = np.array(forecast)
-    else:
-        # Default: simple average
-        forecast = np.full(periods, data.mean())
-    
-    return forecast

@@ -4,7 +4,7 @@ import json
 import os
 from datetime import datetime
 from typing import Optional, List, Dict
-from services.streamlit_service import get_streamlit_api_service
+from services.api_client import send_query
 
 # Directory to persist chat history files
 CHAT_HISTORY_DIR = os.path.join(os.path.dirname(__file__), "..", "chat_history")
@@ -355,19 +355,27 @@ def render_chat_ui():
             send_button = st.button("📤 Send", use_container_width=True)
         
         # Process user input
+        if send_button and not user_input.strip():
+            st.warning("Please type a message before sending.")
+
         if send_button and user_input.strip():
             # Add user message
             add_message("user", user_input)
 
-            # Send message to backend chat service
-            service = get_streamlit_api_service()
-            with st.spinner("AI assistant is thinking..."):
-                response = service.send_chat_message(
-                    user_input,
-                    session_id=st.session_state.current_session_id,
-                )
+            # Send message through API client helper
+            try:
+                with st.spinner("AI assistant is thinking..."):
+                    response = send_query(
+                        query=user_input,
+                        session_id=st.session_state.current_session_id,
+                    )
+            except Exception as exc:
+                response = {
+                    "success": False,
+                    "error": f"Chat API request failed: {exc}",
+                }
 
-            if response is not None:
+            if response.get("success"):
                 backend_session_id = response.get("session_id")
                 if backend_session_id:
                     st.session_state.current_session_id = backend_session_id
@@ -377,13 +385,18 @@ def render_chat_ui():
                     or response.get("message")
                     or response.get("reply")
                     or response.get("answer")
-                    or "I could not parse a response from the backend."
+                    or ""
                 )
+                if not ai_response.strip():
+                    st.warning("The backend returned an empty response.")
+                    ai_response = "I received your message, but no response content was returned."
                 add_message("assistant", ai_response)
             else:
+                err = response.get("error") or "The assistant could not be reached."
+                st.error(err)
                 add_message(
                     "system",
-                    "The assistant could not be reached. Please try again in a moment.",
+                    f"{err} Please try again in a moment.",
                 )
             
             # Reset input
@@ -455,10 +468,7 @@ def render_chat_ui():
 
 def generate_ai_response(user_input: str) -> str:
     """
-    Generate AI response based on user input.
-    
-    This is a placeholder that should be integrated with actual AI backend.
-    Replace with actual API calls or ML model inference.
+    Generate AI response through backend API helper.
     
     Args:
         user_input: The user's message
@@ -466,34 +476,17 @@ def generate_ai_response(user_input: str) -> str:
     Returns:
         AI-generated response string
     """
-    # Placeholder responses based on keywords
-    input_lower = user_input.lower()
-    
-    response_map = {
-        "forecast": "📊 Based on the uploaded data, I can help you with demand forecasting. Please specify which metrics you'd like me to forecast and the time horizon.",
-        "optimization": "🎯 Supply chain optimization involves multiple factors. Would you like me to focus on cost reduction, delivery time, or inventory levels?",
-        "risk": "⚠️ I can analyze supply chain risks from your data. What specific risks are you concerned about (supplier, demand, logistics)?",
-        "metrics": "📈 I can help you understand key supply chain metrics. Which metrics are most important to your business?",
-        "recommendation": "💡 Based on the data patterns, here are some initial recommendations... (Please provide more context)",
-        "data": "📁 I can help analyze your uploaded data. What specific insights are you looking for?",
-        "help": "🆘 I'm here to help! You can ask me about:\n- Data analysis\n- Forecasting\n- Optimization recommendations\n- Risk assessment\n- Metrics interpretation",
-    }
-    
-    # Check for keyword matches
-    for keyword, response in response_map.items():
-        if keyword in input_lower:
-            return response
-    
-    # Default response
-    return (
-        "Thank you for your question! I'm processing your request. To provide better insights, "
-        "I can help you with:\n\n"
-        "• **Data Analysis** - Understand patterns in your supply chain data\n"
-        "• **Forecasting** - Predict future demand or supply trends\n"
-        "• **Optimization** - Find ways to reduce costs or improve efficiency\n"
-        "• **Risk Management** - Identify and mitigate supply chain risks\n\n"
-        "Please specify what you'd like help with, and I'll provide detailed recommendations!"
+    response = send_query(
+        query=user_input,
+        session_id=st.session_state.get("current_session_id"),
     )
+    if response.get("success"):
+        return (
+            response.get("response")
+            or response.get("message")
+            or "I could not parse a response from the backend."
+        )
+    return response.get("error") or "The assistant could not be reached."
 
 
 # Export functions for use in main app
