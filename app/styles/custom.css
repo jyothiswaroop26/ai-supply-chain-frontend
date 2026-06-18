@@ -39,6 +39,7 @@
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
+  --spacing-2xl: 40px;
   
   /* Border Radius */
   --radius-sm: 4px;
@@ -71,6 +72,7 @@ body {
   font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
 }
 
 h1, h2, h3,
@@ -85,7 +87,7 @@ h1, h2, h3,
 
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
-  margin-top: var(--spacing-lg);
+  margin-top: var(--spacing-xl);
   margin-bottom: var(--spacing-md);
   color: var(--text-primary);
   letter-spacing: -0.5px;
@@ -124,7 +126,11 @@ h6 {
 p {
   margin: 0;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.7;
+}
+
+p + p {
+  margin-top: var(--spacing-sm);
 }
 
 a {
@@ -152,7 +158,20 @@ a:hover {
 .container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
+}
+
+/* Normalize streamlit block spacing for stronger vertical rhythm */
+div[data-testid="stVerticalBlock"] {
+  gap: var(--spacing-md);
+}
+
+div[data-testid="stVerticalBlock"] > div {
+  margin-bottom: var(--spacing-sm);
+}
+
+div[data-testid="stVerticalBlock"] > div:last-child {
+  margin-bottom: 0;
 }
 
 /* ============================================================================
@@ -164,7 +183,8 @@ a:hover {
   background: var(--light-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-normal);
 }
@@ -196,9 +216,11 @@ div[data-testid="stButton"] > button,
   color: white;
   border: none;
   border-radius: 10px;
-  padding: var(--spacing-sm) var(--spacing-md);
+  min-height: 40px;
+  padding: 10px var(--spacing-md);
   font-weight: 600;
   cursor: pointer;
+  line-height: 1.2;
   transition: all var(--transition-fast);
   box-shadow: var(--shadow-sm);
 }
@@ -234,9 +256,11 @@ select {
   background: var(--light-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: var(--spacing-sm) var(--spacing-md);
+  min-height: 40px;
+  padding: 10px var(--spacing-md);
   font-family: inherit;
   font-size: 0.95rem;
+  line-height: 1.4;
   color: var(--text-primary);
   transition: all var(--transition-fast);
 }
@@ -335,7 +359,8 @@ select:focus {
   color: var(--text-secondary);
   border: none;
   box-shadow: none;
-  padding: var(--spacing-md) var(--spacing-lg);
+  min-height: 44px;
+  padding: 10px var(--spacing-lg);
   font-weight: 500;
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
@@ -415,6 +440,10 @@ select:focus {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   box-shadow: var(--shadow-md);
   transition: all var(--transition-normal);
   text-align: center;
@@ -457,7 +486,7 @@ select:focus {
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-sm);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
 }
 
 .chart-title {
@@ -542,7 +571,12 @@ select:focus {
   }
 
   .container {
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .section-header {
+    margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
   }
 
   /* Adjust metric columns on mobile */
@@ -566,6 +600,19 @@ select:focus {
 
   .kpi-card-value {
     font-size: 1.5rem;
+  }
+
+  .container {
+    padding: var(--spacing-md);
+  }
+
+  .app-hero {
+    padding: var(--spacing-md);
+  }
+
+  .overview-stats-bar,
+  .upload-stats-bar {
+    gap: var(--spacing-xs);
   }
 }
 
@@ -622,8 +669,8 @@ select:focus {
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.4px;
-  margin-top: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
   padding-bottom: var(--spacing-sm);
   border-bottom: 1px solid var(--border-color);
 }
@@ -681,7 +728,7 @@ select:focus {
   display: flex;
   gap: var(--spacing-md);
   flex-wrap: wrap;
-  margin: var(--spacing-md) 0 var(--spacing-lg);
+  margin: var(--spacing-lg) 0 var(--spacing-xl);
 }
 
 .overview-stat {
@@ -724,7 +771,7 @@ select:focus {
   display: flex;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
-  margin: var(--spacing-sm) 0 var(--spacing-md);
+  margin: var(--spacing-md) 0 var(--spacing-xl);
   padding: var(--spacing-sm) var(--spacing-md);
   background: rgba(31, 119, 224, 0.05);
   border: 1px solid rgba(31, 119, 224, 0.15);
