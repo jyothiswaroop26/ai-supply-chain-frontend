@@ -10,7 +10,9 @@ from components.data_upload import render_data_upload
 from components.data_view import render_data_view
 from components.filters import render_filters
 from components.forecast_view import render_forecast_view
+from components.inventory_view import render_inventory_view
 from components.kpi import render_kpi
+from components.supplier_view import render_supplier_view
 
 # Configuration values
 USER_EMAIL = "pallajyothiswaroopkumar@gmail.com"
@@ -163,11 +165,7 @@ elif section == "KPIs":
 
 elif section == "Inventory":
     with st.spinner("Loading Inventory..."):
-        st.markdown(
-            '<div class="section-header"><span class="section-header-accent"></span>Inventory</div>',
-            unsafe_allow_html=True,
-        )
-        st.info("Add inventory levels, reorder alerts, and stock movement charts here.")
+        render_inventory_view()
 
 elif section == "Demand Forecast":
     with st.spinner("Loading Demand Forecast..."):
@@ -175,11 +173,7 @@ elif section == "Demand Forecast":
 
 elif section == "Supplier Insights":
     with st.spinner("Loading Supplier Insights..."):
-        st.markdown(
-            '<div class="section-header"><span class="section-header-accent"></span>Supplier Insights</div>',
-            unsafe_allow_html=True,
-        )
-        st.info("Add supplier performance, lead time analysis, and risk scoring here.")
+        render_supplier_view()
 
 elif section == "Settings":
     with st.spinner("Loading Settings..."):
