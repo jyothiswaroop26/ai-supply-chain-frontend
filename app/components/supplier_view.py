@@ -196,7 +196,8 @@ def render_supplier_view():
         with tabs[tab_index]:
             tab_index += 1
             st.subheader("Cost vs Lead Time")
-            scatter_df = df[[lead_col, cost_col] + ([supplier_col] if supplier_col else [])].dropna()
+            _scatter_cols = list(dict.fromkeys([lead_col, cost_col] + ([supplier_col] if supplier_col else [])))
+            scatter_df = df[_scatter_cols].dropna()
             fig = px.scatter(
                 scatter_df,
                 x=lead_col,

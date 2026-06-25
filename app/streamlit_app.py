@@ -181,7 +181,260 @@ elif section == "Settings":
             '<div class="section-header"><span class="section-header-accent"></span>Settings</div>',
             unsafe_allow_html=True,
         )
-        st.write("Application configuration and user info")
-        st.markdown(f"**Mail ID:** {USER_EMAIL}")
-        st.markdown(f"**User name:** {USER_NAME}")
-        st.info("Add user preferences, data source configuration, and app controls here.")
+
+        # ── Default session-state values ─────────────────────────────────────
+        _settings_defaults = {
+            "settings_theme": "Light",
+            "settings_date_format": "YYYY-MM-DD",
+            "settings_currency": "USD ($)",
+            "settings_timezone": "UTC",
+            "settings_default_view": "Dashboard + Chat",
+            "settings_rows_per_page": 20,
+            "settings_api_env": "Mock (offline demo)",
+            "settings_api_base_url": "http://localhost:8000",
+            "settings_api_key": "",
+            "settings_mock_mode": True,
+            "settings_request_timeout": 30,
+            "settings_cache_enabled": True,
+            "settings_cache_ttl": 300,
+            "settings_batch_size": 100,
+            "settings_verbose_logging": False,
+            "settings_simulate_delay": True,
+            "settings_notifications": True,
+            "settings_auto_refresh": False,
+            "settings_refresh_interval": 60,
+        }
+        for _k, _v in _settings_defaults.items():
+            if _k not in st.session_state:
+                st.session_state[_k] = _v
+
+        # ── Section tabs ──────────────────────────────────────────────────────
+        tab_user, tab_datasource, tab_controls = st.tabs(
+            ["👤 User Preferences", "🔌 Data Source", "⚙️ App Controls"]
+        )
+
+        # ─────────────────────────────────────────────────────────────────────
+        # TAB 1 – User Preferences
+        # ─────────────────────────────────────────────────────────────────────
+        with tab_user:
+            st.subheader("Profile")
+            col_a, col_b = st.columns(2)
+            with col_a:
+                display_name = st.text_input("Display name", value=USER_NAME)
+            with col_b:
+                display_email = st.text_input("Email", value=USER_EMAIL, disabled=True)
+
+            st.divider()
+            st.subheader("Display Preferences")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.session_state.settings_theme = st.selectbox(
+                    "Theme",
+                    ["Light", "Dark", "Auto"],
+                    index=["Light", "Dark", "Auto"].index(st.session_state.settings_theme),
+                )
+                st.session_state.settings_date_format = st.selectbox(
+                    "Date format",
+                    ["YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY", "DD MMM YYYY"],
+                    index=["YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY", "DD MMM YYYY"].index(
+                        st.session_state.settings_date_format
+                    ),
+                )
+                st.session_state.settings_currency = st.selectbox(
+                    "Currency",
+                    ["USD ($)", "EUR (€)", "GBP (£)", "INR (₹)", "JPY (¥)"],
+                    index=["USD ($)", "EUR (€)", "GBP (£)", "INR (₹)", "JPY (¥)"].index(
+                        st.session_state.settings_currency
+                    ),
+                )
+            with col2:
+                st.session_state.settings_timezone = st.selectbox(
+                    "Timezone",
+                    ["UTC", "US/Eastern", "US/Pacific", "Europe/London", "Asia/Kolkata", "Asia/Tokyo"],
+                    index=["UTC", "US/Eastern", "US/Pacific", "Europe/London", "Asia/Kolkata", "Asia/Tokyo"].index(
+                        st.session_state.settings_timezone
+                    ),
+                )
+                st.session_state.settings_default_view = st.selectbox(
+                    "Default landing view",
+                    [
+                        "Dashboard + Chat",
+                        "Data Upload",
+                        "Filters & Search",
+                        "Data Visualization",
+                        "KPIs",
+                        "Inventory",
+                        "Demand Forecast",
+                        "Supplier Insights",
+                    ],
+                    index=[
+                        "Dashboard + Chat",
+                        "Data Upload",
+                        "Filters & Search",
+                        "Data Visualization",
+                        "KPIs",
+                        "Inventory",
+                        "Demand Forecast",
+                        "Supplier Insights",
+                    ].index(st.session_state.settings_default_view),
+                )
+                st.session_state.settings_rows_per_page = st.number_input(
+                    "Rows per page (tables)",
+                    min_value=5,
+                    max_value=500,
+                    step=5,
+                    value=st.session_state.settings_rows_per_page,
+                )
+
+            st.divider()
+            if st.button("💾 Save User Preferences", use_container_width=True):
+                st.success(f"User preferences saved — welcome back, {display_name}!")
+
+        # ─────────────────────────────────────────────────────────────────────
+        # TAB 2 – Data Source Configuration
+        # ─────────────────────────────────────────────────────────────────────
+        with tab_datasource:
+            st.subheader("API Environment")
+            env_options = [
+                "Mock (offline demo)",
+                "Local (localhost:8000)",
+                "Development",
+                "Staging",
+                "Production",
+            ]
+            st.session_state.settings_api_env = st.selectbox(
+                "Environment",
+                env_options,
+                index=env_options.index(st.session_state.settings_api_env),
+            )
+
+            col_ds1, col_ds2 = st.columns(2)
+            with col_ds1:
+                st.session_state.settings_api_base_url = st.text_input(
+                    "API base URL",
+                    value=st.session_state.settings_api_base_url,
+                    placeholder="http://localhost:8000",
+                )
+                st.session_state.settings_request_timeout = st.slider(
+                    "Request timeout (seconds)",
+                    min_value=5,
+                    max_value=120,
+                    value=st.session_state.settings_request_timeout,
+                    step=5,
+                )
+                st.session_state.settings_batch_size = st.number_input(
+                    "Batch size",
+                    min_value=10,
+                    max_value=1000,
+                    step=10,
+                    value=st.session_state.settings_batch_size,
+                )
+            with col_ds2:
+                st.session_state.settings_api_key = st.text_input(
+                    "API key",
+                    value=st.session_state.settings_api_key,
+                    type="password",
+                    placeholder="Leave blank for mock/local",
+                )
+                st.session_state.settings_cache_ttl = st.slider(
+                    "Cache TTL (seconds)",
+                    min_value=30,
+                    max_value=3600,
+                    value=st.session_state.settings_cache_ttl,
+                    step=30,
+                )
+                st.session_state.settings_mock_mode = st.toggle(
+                    "Mock mode (use generated sample data)",
+                    value=st.session_state.settings_mock_mode,
+                )
+
+            st.divider()
+            st.caption("Current effective endpoint")
+            effective_url = (
+                "mock://internal"
+                if st.session_state.settings_mock_mode
+                else f"{st.session_state.settings_api_base_url}/api/v1"
+            )
+            st.code(effective_url, language=None)
+
+            col_test, col_save = st.columns(2)
+            with col_test:
+                if st.button("🔍 Test Connection", use_container_width=True):
+                    if st.session_state.settings_mock_mode:
+                        st.success("Mock mode — connection always available.")
+                    else:
+                        st.warning("Live connection test not implemented in this build.")
+            with col_save:
+                if st.button("💾 Save Data Source Settings", use_container_width=True):
+                    st.success("Data source configuration saved.")
+
+        # ─────────────────────────────────────────────────────────────────────
+        # TAB 3 – App Controls
+        # ─────────────────────────────────────────────────────────────────────
+        with tab_controls:
+            st.subheader("Runtime Controls")
+            ctrl_col1, ctrl_col2 = st.columns(2)
+            with ctrl_col1:
+                st.session_state.settings_verbose_logging = st.toggle(
+                    "Verbose logging",
+                    value=st.session_state.settings_verbose_logging,
+                )
+                st.session_state.settings_simulate_delay = st.toggle(
+                    "Simulate API latency",
+                    value=st.session_state.settings_simulate_delay,
+                )
+                st.session_state.settings_notifications = st.toggle(
+                    "In-app notifications",
+                    value=st.session_state.settings_notifications,
+                )
+            with ctrl_col2:
+                st.session_state.settings_cache_enabled = st.toggle(
+                    "Enable response caching",
+                    value=st.session_state.settings_cache_enabled,
+                )
+                st.session_state.settings_auto_refresh = st.toggle(
+                    "Auto-refresh dashboard",
+                    value=st.session_state.settings_auto_refresh,
+                )
+                if st.session_state.settings_auto_refresh:
+                    st.session_state.settings_refresh_interval = st.number_input(
+                        "Refresh interval (seconds)",
+                        min_value=10,
+                        max_value=600,
+                        step=10,
+                        value=st.session_state.settings_refresh_interval,
+                    )
+
+            st.divider()
+            st.subheader("Cache & Session Management")
+            cache_col1, cache_col2, cache_col3 = st.columns(3)
+            with cache_col1:
+                if st.button("🗑️ Clear Data Cache", use_container_width=True):
+                    keys_to_clear = [k for k in st.session_state if k.startswith("cache_")]
+                    for k in keys_to_clear:
+                        del st.session_state[k]
+                    st.success(f"Cleared {len(keys_to_clear)} cached item(s).")
+            with cache_col2:
+                if st.button("📂 Clear Uploaded Data", use_container_width=True):
+                    st.session_state.uploaded_df = None
+                    st.success("Uploaded dataset removed from session.")
+            with cache_col3:
+                if st.button("♻️ Reset All Settings", use_container_width=True):
+                    for _k, _v in _settings_defaults.items():
+                        st.session_state[_k] = _v
+                    st.success("All settings reset to defaults.")
+                    st.rerun()
+
+            st.divider()
+            st.subheader("App Info")
+            info_col1, info_col2 = st.columns(2)
+            with info_col1:
+                st.markdown("**Release:** UI Polish Final")
+                st.markdown("**Framework:** Streamlit")
+                st.markdown(f"**User:** {USER_NAME}")
+            with info_col2:
+                st.markdown(f"**Email:** {USER_EMAIL}")
+                st.markdown("**API Version:** v1")
+                st.markdown(
+                    f"**Mock mode:** {'✅ On' if st.session_state.settings_mock_mode else '❌ Off'}"
+                )

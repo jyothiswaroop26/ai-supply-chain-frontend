@@ -1,15 +1,15 @@
 [theme]
 # Primary color (used for interactive elements)
-primaryColor = "#1f77e0"
+primaryColor = "#7C3AED"
 
 # Background color of the app
-backgroundColor = "#ffffff"
+backgroundColor = "#F5F3FF"
 
 # Secondary background color (used for st.sidebar, st.info, st.warning, st.success, st.error)
-secondaryBackgroundColor = "#f8f9fa"
+secondaryBackgroundColor = "#EDE9FE"
 
 # Text color
-textColor = "#1a1a1a"
+textColor = "#1E1B4B"
 
 # Font
 font = "sans serif"
