@@ -1,6 +1,8 @@
 import os
 import sys
 
+import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -41,6 +43,177 @@ def load_custom_css():
 
 
 load_custom_css()
+
+
+def _detect_column(df: pd.DataFrame, keywords: list[str]) -> str | None:
+    """Return first column whose name matches any keyword."""
+    for col in df.columns:
+        lower_name = col.lower()
+        if any(keyword in lower_name for keyword in keywords):
+            return col
+    return None
+
+
+def _render_dashboard_tab(df: pd.DataFrame) -> None:
+    """Render the dashboard workspace with interactive insights."""
+    rows, cols = df.shape
+    numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
+    categorical_cols = [
+        col
+        for col in df.select_dtypes(include=["object", "category", "bool"]).columns.tolist()
+        if df[col].nunique(dropna=True) <= 40
+    ]
+    missing_pct = round(df.isnull().sum().sum() / max(df.size, 1) * 100, 1)
+    duplicate_pct = round(df.duplicated().mean() * 100, 1)
+
+    st.markdown(
+        f"""
+<div class="overview-stats-bar">
+  <div class="overview-stat">
+    <div class="overview-stat-value">{rows:,}</div>
+    <div class="overview-stat-label">Rows</div>
+  </div>
+  <div class="overview-stat">
+    <div class="overview-stat-value">{cols}</div>
+    <div class="overview-stat-label">Columns</div>
+  </div>
+  <div class="overview-stat">
+    <div class="overview-stat-value">{len(numeric_cols)}</div>
+    <div class="overview-stat-label">Numeric Columns</div>
+  </div>
+  <div class="overview-stat">
+    <div class="overview-stat-value">{missing_pct}%</div>
+    <div class="overview-stat-label">Missing Values</div>
+  </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        f"""
+<div class="dashboard-grid">
+  <div class="dashboard-card">
+    <div class="dashboard-card-title">Data Health</div>
+    <div class="dashboard-card-value">{100 - missing_pct:.1f}% complete</div>
+    <div class="dashboard-card-note">Based on non-null values across all cells</div>
+  </div>
+  <div class="dashboard-card">
+    <div class="dashboard-card-title">Duplicate Rows</div>
+    <div class="dashboard-card-value">{duplicate_pct}%</div>
+    <div class="dashboard-card-note">Potentially repeated records in the dataset</div>
+  </div>
+  <div class="dashboard-card">
+    <div class="dashboard-card-title">Analysis Readiness</div>
+    <div class="dashboard-card-value">{len(categorical_cols)} segments</div>
+    <div class="dashboard-card-note">Categorical columns suitable for grouped insights</div>
+  </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+    health_tags = []
+    health_tags.append(("GOOD", "Missing <= 5%") if missing_pct <= 5 else ("CHECK", "Missing > 5%"))
+    health_tags.append(("GOOD", "Duplicates <= 2%") if duplicate_pct <= 2 else ("CHECK", "Duplicates > 2%"))
+    health_tags.append(("GOOD", "Numeric columns found") if numeric_cols else ("WARN", "No numeric columns"))
+    health_tags.append(("GOOD", "Segments available") if categorical_cols else ("CHECK", "Limited segmentation"))
+
+    badges_html = "".join(
+        f'<span class="health-badge health-{level.lower()}">{level}: {label}</span>' for level, label in health_tags
+    )
+    st.markdown(f'<div class="health-badges">{badges_html}</div>', unsafe_allow_html=True)
+
+    if not numeric_cols:
+        st.warning("No numeric columns found. Upload a dataset with at least one numeric field for charting.")
+        st.dataframe(df.head(20), use_container_width=True)
+        return
+
+    default_metric = _detect_column(df, ["value", "cost", "price", "quantity", "demand", "inventory"]) or numeric_cols[0]
+    default_category = _detect_column(df, ["supplier", "product", "category", "region", "warehouse"])
+    default_date = _detect_column(df, ["date", "week", "month", "period", "time"])
+
+    control_col1, control_col2, control_col3 = st.columns(3)
+    with control_col1:
+        metric_col = st.selectbox(
+            "Primary metric",
+            options=numeric_cols,
+            index=numeric_cols.index(default_metric) if default_metric in numeric_cols else 0,
+            help="Used by distribution and trend charts.",
+        )
+    with control_col2:
+        category_options = [None] + categorical_cols
+        category_col = st.selectbox(
+            "Category segment",
+            options=category_options,
+            index=category_options.index(default_category) if default_category in category_options else 0,
+            format_func=lambda x: "None" if x is None else x,
+            help="Optional grouped analysis by categorical field.",
+        )
+    with control_col3:
+        top_n = st.slider("Top categories", min_value=5, max_value=25, value=10, step=1)
+
+    left_chart, right_chart = st.columns(2)
+
+    with left_chart:
+        st.subheader("Metric Trend or Distribution")
+        date_col = default_date if default_date in df.columns else None
+        if date_col:
+            ts_df = df[[date_col, metric_col]].copy()
+            ts_df[date_col] = pd.to_datetime(ts_df[date_col], errors="coerce")
+            ts_df = ts_df.dropna(subset=[date_col, metric_col]).sort_values(date_col)
+            if not ts_df.empty:
+                ts_agg = ts_df.groupby(date_col, as_index=False)[metric_col].mean()
+                trend_fig = px.line(
+                    ts_agg,
+                    x=date_col,
+                    y=metric_col,
+                    template="plotly_white",
+                    title=f"Average {metric_col} over time",
+                    markers=True,
+                )
+                trend_fig.update_layout(margin=dict(l=8, r=8, t=46, b=8))
+                st.plotly_chart(trend_fig, use_container_width=True)
+            else:
+                st.info("Date parsing failed for trend view. Displaying metric distribution instead.")
+                hist_fig = px.histogram(df, x=metric_col, nbins=30, template="plotly_white")
+                hist_fig.update_layout(margin=dict(l=8, r=8, t=24, b=8))
+                st.plotly_chart(hist_fig, use_container_width=True)
+        else:
+            hist_fig = px.histogram(df, x=metric_col, nbins=30, template="plotly_white")
+            hist_fig.update_layout(margin=dict(l=8, r=8, t=24, b=8))
+            st.plotly_chart(hist_fig, use_container_width=True)
+
+    with right_chart:
+        st.subheader("Segment Comparison")
+        if category_col:
+            grouped = (
+                df[[category_col, metric_col]]
+                .dropna()
+                .groupby(category_col, as_index=False)[metric_col]
+                .mean()
+                .sort_values(metric_col, ascending=False)
+                .head(top_n)
+            )
+            bar_fig = px.bar(
+                grouped,
+                x=category_col,
+                y=metric_col,
+                template="plotly_white",
+                title=f"Top {top_n} by average {metric_col}",
+                color=metric_col,
+                color_continuous_scale="Blues",
+            )
+            bar_fig.update_layout(xaxis_tickangle=-30, margin=dict(l=8, r=8, t=46, b=8), coloraxis_showscale=False)
+            st.plotly_chart(bar_fig, use_container_width=True)
+        else:
+            box_fig = px.box(df, y=metric_col, template="plotly_white", title=f"Distribution of {metric_col}")
+            box_fig.update_layout(margin=dict(l=8, r=8, t=46, b=8))
+            st.plotly_chart(box_fig, use_container_width=True)
+
+    st.subheader("Data Preview")
+    st.dataframe(df.head(20), use_container_width=True)
+    st.caption("Tip: Move to Filters, KPIs, Inventory, and Supplier Insights for deeper diagnostics.")
 
 st.markdown(
     """
@@ -103,33 +276,7 @@ if section == "Dashboard + Chat":
             st.subheader("Overview")
             df = st.session_state.get("uploaded_df")
             if df is not None:
-                rows, cols = df.shape
-                numeric_count = len(df.select_dtypes(include=["number"]).columns)
-                missing_pct = round(df.isnull().sum().sum() / max(df.size, 1) * 100, 1)
-                st.markdown(
-                    f"""
-<div class="overview-stats-bar">
-  <div class="overview-stat">
-    <div class="overview-stat-value">{rows:,}</div>
-    <div class="overview-stat-label">Rows</div>
-  </div>
-  <div class="overview-stat">
-    <div class="overview-stat-value">{cols}</div>
-    <div class="overview-stat-label">Columns</div>
-  </div>
-  <div class="overview-stat">
-    <div class="overview-stat-value">{numeric_count}</div>
-    <div class="overview-stat-label">Numeric Cols</div>
-  </div>
-  <div class="overview-stat">
-    <div class="overview-stat-value">{missing_pct}%</div>
-    <div class="overview-stat-label">Missing Values</div>
-  </div>
-</div>
-""",
-                    unsafe_allow_html=True,
-                )
-                st.dataframe(df.head(20), use_container_width=True)
+                                _render_dashboard_tab(df)
             else:
                 st.markdown(
                     """
